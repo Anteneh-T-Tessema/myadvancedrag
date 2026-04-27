@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Smoke test — import core modules
+        run: |
+          python3 -c "from core.chunker import AdvancedChunker; print('chunker ok')"
+          python3 -c "from core.hybrid_search import HybridSearchEngine; print('hybrid_search ok')"
+          python3 -c "from core.router import SemanticRouter; print('router ok')"
+          python3 -c "from core.hyde import HyDETransformer; print('hyde ok')"
+          python3 -c "from core.pipeline import AdvancedRAGPipeline; print('pipeline ok')"
+
+      - name: Test chunker
+        run: |
+          python3 -c "
+          from core.chunker import AdvancedChunker
+          c = AdvancedChunker()
+          text = 'This is sentence one. This is sentence two. Topic changes here entirely. New concept introduced now.'
+          chunks = c.fixed_chunk(text, source='test')
+          assert len(chunks) > 0
+          assert all(ch.metadata.get('source') == 'test' for ch in chunks)
+          print(f'Fixed chunks: {len(chunks)} ok')
+
+          pc = c.parent_child_chunk(text, source='test')
+          parents = [ch for ch in pc if ch.chunk_type == 'parent']
+          children = [ch for ch in pc if ch.chunk_type == 'child']
+          assert len(parents) > 0
+          assert len(children) > 0
+          print(f'Parent-child: {len(parents)} parents, {len(children)} children ok')
+          "
+
+      - name: Test hybrid search (no model required)
+        run: |
+          python3 -c "
+          from core.hybrid_search import HybridSearchEngine
+          engine = HybridSearchEngine()
+          chunks = [
+            {'chunk_id': '1', 'content': 'BM25 is a ranking function based on term frequency.', 'doc_id': 'd1', 'metadata': {'source': 'test'}, 'chunk_type': 'fixed'},
+            {'chunk_id': '2', 'content': 'Vector search uses cosine similarity of embeddings.', 'doc_id': 'd1', 'metadata': {'source': 'test'}, 'chunk_type': 'fixed'},
+          ]
+          indexed = engine.add_chunks(chunks)
+          assert indexed == 2
+          stats = engine.get_stats()
+          assert stats['total_chunks'] == 2
+          print('Hybrid search index ok')
+          results = engine.search('BM25 term frequency', use_hybrid=True)
+          print(f'Search returned {len(results)} results ok')
+          "
+
+      - name: Test semantic router
+        run: |
+          python3 -c "
+          from core.router import SemanticRouter
+          router = SemanticRouter()
+          router.build()
+          d = router.route('What is 15 percent of 240000?')
+          print(f'Route: {d.target.value}, confidence: {d.confidence:.3f}')
+          assert d.target.value in ['calculator', 'numerical_sql', 'hybrid']
+          print('Router ok')
+          "
+
+      - name: Test Flask API imports
+        run: |
+          python3 -c "
+          import sys; sys.path.insert(0, '.')
+          from api.server import app
+          client = app.test_client()
+          r = client.get('/api/health')
+          assert r.status_code == 200
+          import json
+          data = json.loads(r.data)
+          assert data['status'] == 'ok'
+          print('API health check ok')
+          "

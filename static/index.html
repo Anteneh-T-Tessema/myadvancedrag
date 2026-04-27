@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Advanced RAG Studio — Production Pipeline Explorer</title>
+  <meta name="description" content="Interactive dashboard for exploring advanced RAG architectures: semantic routing, HyDE query transformation, hybrid search with RRF, and parent-child retrieval." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/dashboard.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════ SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <span class="logo-text">RAG Studio</span>
+    </div>
+    <span class="version-badge">v2.0</span>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Pipeline</div>
+    <a class="nav-item active" data-view="query" href="#" id="nav-query">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/><path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Query Explorer
+    </a>
+    <a class="nav-item" data-view="ingest" href="#" id="nav-ingest">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Ingest Documents
+    </a>
+    <a class="nav-item" data-view="router" href="#" id="nav-router">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Semantic Router
+    </a>
+    <a class="nav-item" data-view="hyde" href="#" id="nav-hyde">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      HyDE Transform
+    </a>
+
+    <div class="nav-section-label" style="margin-top:16px;">System</div>
+    <a class="nav-item" data-view="config" href="#" id="nav-config">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="currentColor" stroke-width="2"/></svg>
+      Pipeline Config
+    </a>
+    <a class="nav-item" data-view="stats" href="#" id="nav-stats">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M18 20V10M12 20V4M6 20v-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Index Stats
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="status-indicator" id="api-status">
+      <span class="status-dot" id="status-dot"></span>
+      <span id="status-text">Connecting…</span>
+    </div>
+    <div class="index-size-badge" id="index-size-footer">0 chunks indexed</div>
+  </div>
+</aside>
+
+<!-- ═══════════════════════════════════════════════════════════════════ MAIN -->
+<main class="main-content" id="main-content">
+
+  <!-- ────────────────────────── Top Bar ── -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <h1 class="page-title" id="page-title">Query Explorer</h1>
+      <p class="page-subtitle" id="page-subtitle">Run queries through the full Advanced RAG pipeline with live stage tracing</p>
+    </div>
+    <div class="topbar-right">
+      <div class="model-chip" id="current-model-chip">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M12 8v4l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span id="current-model-label">Loading…</span>
+      </div>
+      <button class="btn btn-ghost" id="refresh-btn" title="Refresh status">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><polyline points="23 4 23 10 17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ════════════════════ VIEW: QUERY EXPLORER ════════════════════ -->
+  <section class="view active" id="view-query">
+    <div class="two-col-layout">
+
+      <!-- LEFT: Input Panel -->
+      <div class="panel panel-query-input">
+        <div class="panel-header">
+          <span class="panel-title">Query Input</span>
+          <div class="toggle-row">
+            <label class="toggle-label">Generate Answer</label>
+            <label class="toggle">
+              <input type="checkbox" id="toggle-answer" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="query-input-wrap">
+            <textarea
+              id="query-input"
+              class="query-textarea"
+              placeholder="Ask anything… e.g. How does Reciprocal Rank Fusion work?"
+              rows="4"
+            ></textarea>
+            <div class="query-toolbar">
+              <div class="example-queries">
+                <span class="eq-label">Examples:</span>
+                <button class="eq-chip" data-q="How does Hybrid Search with RRF work?">Hybrid Search</button>
+                <button class="eq-chip" data-q="What is HyDE and why does it improve recall?">HyDE</button>
+                <button class="eq-chip" data-q="What is the total revenue for Q3?">SQL Route</button>
+                <button class="eq-chip" data-q="Explain parent-child chunking strategy">Chunking</button>
+                <button class="eq-chip" data-q="Compare Qdrant vs pgvector for agent systems">Vector DBs</button>
+              </div>
+              <button class="btn btn-primary" id="run-query-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><polygon points="5,3 19,12 5,21" fill="currentColor"/></svg>
+                Run Pipeline
+              </button>
+            </div>
+          </div>
+
+          <!-- Pipeline Toggles -->
+          <div class="pipeline-toggles">
+            <div class="pipeline-stage-toggle" id="toggle-card-router">
+              <div class="stage-toggle-icon router-color">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="m15 9-6 6M9 9l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              </div>
+              <div class="stage-toggle-info">
+                <div class="stage-name">Semantic Router</div>
+                <div class="stage-desc">Intent triage</div>
+              </div>
+              <label class="toggle mini">
+                <input type="checkbox" id="toggle-router" checked />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="pipeline-stage-toggle" id="toggle-card-hyde">
+              <div class="stage-toggle-icon hyde-color">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              </div>
+              <div class="stage-toggle-info">
+                <div class="stage-name">HyDE Transform</div>
+                <div class="stage-desc">Query expansion</div>
+              </div>
+              <label class="toggle mini">
+                <input type="checkbox" id="toggle-hyde" checked />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="pipeline-stage-toggle" id="toggle-card-hybrid">
+              <div class="stage-toggle-icon hybrid-color">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/><path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              </div>
+              <div class="stage-toggle-info">
+                <div class="stage-name">Hybrid Search</div>
+                <div class="stage-desc">Dense + BM25 + RRF</div>
+              </div>
+              <label class="toggle mini">
+                <input type="checkbox" id="toggle-hybrid" checked />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="pipeline-stage-toggle" id="toggle-card-merge">
+              <div class="stage-toggle-icon merge-color">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M8 6H21M8 12H21M8 18H21M3 6v.01M3 12v.01M3 18v.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              </div>
+              <div class="stage-toggle-info">
+                <div class="stage-name">Auto-Merge</div>
+                <div class="stage-desc">Child→Parent</div>
+              </div>
+              <label class="toggle mini">
+                <input type="checkbox" id="toggle-merge" checked />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Pipeline Trace -->
+      <div class="panel panel-trace">
+        <div class="panel-header">
+          <span class="panel-title">Pipeline Trace</span>
+          <span class="latency-badge" id="total-latency">—</span>
+        </div>
+        <div class="panel-body" id="pipeline-trace">
+          <div class="empty-state">
+            <div class="empty-icon">⚡</div>
+            <div class="empty-title">Ready to run</div>
+            <div class="empty-desc">Load the demo corpus, then run a query to see live pipeline stages, routing decisions, HyDE expansion, and retrieved chunks.</div>
+            <button class="btn btn-outline" id="load-demo-btn-trace">Load Demo Corpus</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Retrieved Chunks -->
+    <div class="panel" id="chunks-panel" style="display:none;">
+      <div class="panel-header">
+        <span class="panel-title">Retrieved Chunks</span>
+        <div class="chunk-meta-row" id="chunk-meta-row"></div>
+      </div>
+      <div class="panel-body" id="chunks-container"></div>
+    </div>
+
+    <!-- Generated Answer -->
+    <div class="panel" id="answer-panel" style="display:none;">
+      <div class="panel-header">
+        <span class="panel-title">Generated Answer</span>
+        <div class="answer-meta" id="answer-meta"></div>
+      </div>
+      <div class="panel-body">
+        <div class="answer-content" id="answer-content"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════ VIEW: INGEST ════════════════════ -->
+  <section class="view" id="view-ingest">
+    <div class="two-col-layout">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Ingest Document</span></div>
+        <div class="panel-body">
+          <div class="form-group">
+            <label class="form-label">Document Text</label>
+            <textarea id="ingest-text" class="form-textarea" placeholder="Paste your document content here…" rows="12"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Source Name</label>
+              <input type="text" id="ingest-source" class="form-input" placeholder="e.g. rag_whitepaper.pdf" value="manual_upload" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Chunking Strategy</label>
+              <select id="ingest-strategy" class="form-select">
+                <option value="semantic">Semantic (cosine breakpoints)</option>
+                <option value="parent_child">Parent-Child (auto-merge)</option>
+                <option value="fixed">Fixed-size + Metadata</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" id="ingest-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Ingest Document
+            </button>
+            <button class="btn btn-outline" id="load-demo-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Load Demo Corpus (7 docs)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Ingestion Result</span></div>
+        <div class="panel-body" id="ingest-result">
+          <div class="empty-state">
+            <div class="empty-icon">📄</div>
+            <div class="empty-title">No document ingested yet</div>
+            <div class="empty-desc">Paste your text on the left, choose a chunking strategy, and click Ingest.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════ VIEW: ROUTER ════════════════════ -->
+  <section class="view" id="view-router">
+    <div class="two-col-layout">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Test Semantic Router</span></div>
+        <div class="panel-body">
+          <div class="form-group">
+            <label class="form-label">Query to Route</label>
+            <input type="text" id="router-query" class="form-input" placeholder="e.g. What is the total revenue this quarter?" />
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" id="router-test-btn">Test Routing</button>
+          </div>
+          <div id="router-result-area" class="router-result-area" style="display:none;"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Configured Routes</span></div>
+        <div class="panel-body" id="routes-list">
+          <div class="spinner-wrap"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════ VIEW: HYDE ════════════════════ -->
+  <section class="view" id="view-hyde">
+    <div class="two-col-layout">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">HyDE Query Transformation</span></div>
+        <div class="panel-body">
+          <div class="form-group">
+            <label class="form-label">Original Query</label>
+            <textarea id="hyde-query" class="form-textarea" placeholder="Enter a technical or ambiguous query…" rows="4"></textarea>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" id="hyde-btn">Generate Hypothetical Document</button>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Hypothetical Document</span>
+          <span class="latency-badge" id="hyde-latency">—</span>
+        </div>
+        <div class="panel-body" id="hyde-result">
+          <div class="empty-state">
+            <div class="empty-icon">✨</div>
+            <div class="empty-title">No transformation yet</div>
+            <div class="empty-desc">HyDE generates a plausible-sounding document that bridges the vocabulary gap between your short query and dense technical content.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HyDE Explainer -->
+    <div class="panel explainer-panel">
+      <div class="panel-header"><span class="panel-title">How HyDE Works</span></div>
+      <div class="panel-body">
+        <div class="hyde-flow">
+          <div class="flow-step">
+            <div class="flow-step-num">1</div>
+            <div class="flow-step-body">
+              <div class="flow-step-title">Short Query Received</div>
+              <div class="flow-step-desc">User submits a terse, ambiguous, or highly technical query that may not share vocabulary with your document corpus.</div>
+            </div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-step-num">2</div>
+            <div class="flow-step-body">
+              <div class="flow-step-title">LLM Generates Hypothetical Answer</div>
+              <div class="flow-step-desc">A fast local model (Ollama) generates a structurally plausible document passage — even if factually uncertain, it uses correct jargon and syntax.</div>
+            </div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-step-num">3</div>
+            <div class="flow-step-body">
+              <div class="flow-step-title">Embed Hypothetical Document</div>
+              <div class="flow-step-desc">The hypothetical document — not the original query — is embedded. This creates a paragraph-to-paragraph comparison in vector space.</div>
+            </div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-step-num">4</div>
+            <div class="flow-step-body">
+              <div class="flow-step-title">Superior Retrieval</div>
+              <div class="flow-step-desc">Recall@K improves significantly because the search vector now structurally matches target document embeddings.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════ VIEW: CONFIG ════════════════════ -->
+  <section class="view" id="view-config">
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">Pipeline Configuration</span></div>
+      <div class="panel-body">
+        <div class="config-grid" id="config-grid">
+          <div class="spinner-wrap"><div class="spinner"></div></div>
+        </div>
+        <div class="form-actions" style="margin-top:24px;">
+          <button class="btn btn-primary" id="save-config-btn">Apply Configuration</button>
+          <button class="btn btn-ghost" id="reset-config-btn">Reset to Defaults</button>
+        </div>
+        <div id="config-feedback" class="config-feedback"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════ VIEW: STATS ════════════════════ -->
+  <section class="view" id="view-stats">
+    <div class="stats-grid" id="stats-grid">
+      <div class="spinner-wrap" style="grid-column:1/-1;"><div class="spinner"></div></div>
+    </div>
+
+    <div class="panel" style="margin-top:20px;">
+      <div class="panel-header">
+        <span class="panel-title">Ingested Documents</span>
+        <button class="btn btn-danger-ghost" id="clear-index-btn">Clear Index</button>
+      </div>
+      <div class="panel-body" id="docs-list">
+        <div class="empty-state"><div class="empty-icon">📂</div><div class="empty-title">No documents indexed</div></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═══════════════════════════════════════════════════════════════ LOADING OVERLAY -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-card">
+    <div class="loading-spinner"></div>
+    <div class="loading-text" id="loading-text">Running pipeline…</div>
+    <div class="loading-stages" id="loading-stages"></div>
+  </div>
+</div>
+
+<script src="/static/js/dashboard.js"></script>
+</body>
+</html>
