@@ -41,6 +41,22 @@ The system ships with a full dark-mode **React-free** interactive dashboard:
 - **Pipeline Config** — tune every parameter live (no restart needed)
 - **Index Stats** — monitor chunk counts, BM25 status, per-document breakdown
 
+### 1. Ingestion & Advanced Chunking
+Moving beyond fixed-size windows. We implement **Semantic Breakpoint Detection** (cosine similarity) and **Parent-Child Hierarchies**.
+[Detailed Ingestion Docs →](docs/stages/ingestion.md)
+
+### 2. Semantic Routing
+The pipeline triage layer. Directs queries to the optimal agent or datastore based on intent centroids.
+[Detailed Routing Docs →](docs/stages/routing.md)
+
+### 3. HyDE (Hypothetical Document Embeddings)
+Query expansion using local LLMs to bridge the vocabulary gap between short queries and technical documents.
+[Detailed HyDE Docs →](docs/stages/hyde.md)
+
+### 4. Hybrid Search & RRF
+Dual-path retrieval using **Dense Vectors** (Sentence Transformers) + **Sparse BM25**, fused via **Reciprocal Rank Fusion (RRF)**.
+[Detailed Search Docs →](docs/stages/search.md)
+
 ---
 
 ## Architecture
