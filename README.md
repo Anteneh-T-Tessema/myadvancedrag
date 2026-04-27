@@ -59,6 +59,13 @@ Dual-path retrieval using **Dense Vectors** (Sentence Transformers) + **Sparse B
 
 ---
 
+## 🎓 Tutorials & Guides
+Master the art of AI Engineering with these step-by-step workflows:
+- **[Solving Retrieval Failure](docs/tutorials/01_solving_retrieval_failure.md)** — A walkthrough on using HyDE and Semantic Chunking to fix "invisible" retrieval misses.
+- **[Hardware-Aware Optimization](docs/tutorials/02_hardware_optimization.md)** — How to tune the pipeline for Apple Silicon (M3/M4) vs NVIDIA.
+
+---
+
 ## Architecture
 
 ```
