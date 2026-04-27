@@ -61,8 +61,11 @@ Dual-path retrieval using **Dense Vectors** (Sentence Transformers) + **Sparse B
 
 ## 🎓 Tutorials & Guides
 Master the art of AI Engineering with these step-by-step workflows:
-- **[Solving Retrieval Failure](docs/tutorials/01_solving_retrieval_failure.md)** — A walkthrough on using HyDE and Semantic Chunking to fix "invisible" retrieval misses.
-- **[Hardware-Aware Optimization](docs/tutorials/02_hardware_optimization.md)** — How to tune the pipeline for Apple Silicon (M3/M4) vs NVIDIA.
+- **[01: Solving Retrieval Failure](docs/tutorials/01_solving_retrieval_failure.md)** — Fixing "invisible" misses with HyDE.
+- **[02: Hardware-Aware Optimization](docs/tutorials/02_hardware_optimization.md)** — Tuning for Apple Silicon (M3/M4) vs NVIDIA.
+- **[03: Mastering Semantic Routing](docs/tutorials/03_semantic_routing_logic.md)** — Building high-precision triage layers.
+- **[04: Hybrid Search & RRF Deep Dive](docs/tutorials/04_hybrid_search_fusion.md)** — Combining Dense + Sparse retrieval.
+- **[05: Context Recovery (Parent-Child)](docs/tutorials/05_context_recovery_strategies.md)** — Solving the granularity paradox.
 
 ---
 
