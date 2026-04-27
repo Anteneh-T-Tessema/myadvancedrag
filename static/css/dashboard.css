@@ -277,3 +277,21 @@ body { display: flex; }
   .stats-grid { grid-template-columns: 1fr; }
   .pipeline-toggles { grid-template-columns: 1fr; }
 }
+
+/* ── Hardware & Models ── */
+.popular-models-grid { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+.model-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; transition: all .2s; }
+.model-card:hover { border-color: var(--primary); }
+.model-info { flex: 1; }
+.model-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.model-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.model-meta { font-size: 10px; color: var(--accent); font-family: var(--mono); margin-top: 4px; }
+.hw-stat-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+.hw-stat-row:last-child { border-bottom: none; }
+.hw-stat-key { color: var(--text-muted); font-weight: 500; }
+.hw-stat-val { color: var(--text); font-family: var(--mono); }
+.tier-badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 15px; }
+.tier-apple_silicon_high, .tier-nvidia_high { background: rgba(16,185,129,.2); color: var(--green); }
+.tier-apple_silicon_low, .tier-nvidia_low { background: rgba(245,158,11,.2); color: var(--yellow); }
+.tier-cpu_only { background: rgba(239,68,68,.2); color: var(--red); }
+.hw-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--primary); margin: 15px 0 8px; font-weight: 700; }

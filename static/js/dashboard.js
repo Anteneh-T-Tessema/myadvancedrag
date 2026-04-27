@@ -5,12 +5,13 @@ const API = 'http://localhost:7891/api';
 let currentConfig = {};
 
 // ── Nav ────────────────────────────────────────────────────────
-const views = ['query','ingest','router','hyde','config','stats'];
+const views = ['query','ingest','router','hyde','hardware','config','stats'];
 const titles = {
   query:  ['Query Explorer','Run queries through the full Advanced RAG pipeline with live stage tracing'],
   ingest: ['Ingest Documents','Add documents to the vector index using semantic, parent-child, or fixed chunking'],
   router: ['Semantic Router','Test intent classification — routes queries to the optimal pipeline target'],
   hyde:   ['HyDE Transform','Generate hypothetical documents to bridge the vocabulary gap in retrieval'],
+  hardware: ['Hardware & Models','Inspect your hardware and manage local AI models via Ollama'],
   config: ['Pipeline Configuration','Tune every parameter of the Advanced RAG pipeline in real time'],
   stats:  ['Index Stats','Monitor ingested documents, chunk counts, and index health'],
 };
@@ -26,6 +27,7 @@ document.querySelectorAll('.nav-item').forEach(el => {
     document.getElementById('page-title').textContent = titles[v][0];
     document.getElementById('page-subtitle').textContent = titles[v][1];
     if (v === 'router') loadRoutes();
+    if (v === 'hardware') { loadHardware(); loadPopularModels(); }
     if (v === 'config') loadConfig();
     if (v === 'stats')  loadStats();
   });
@@ -486,6 +488,90 @@ document.getElementById('clear-index-btn').addEventListener('click', async () =>
   await api('/stats/clear','POST');
   loadStats();
   checkStatus();
+});
+
+// ── Hardware & Models ──────────────────────────────────────────
+async function loadHardware() {
+  const el = document.getElementById('hardware-profile-content');
+  el.innerHTML = '<div class="spinner-wrap"><div class="spinner"></div></div>';
+  try {
+    const hw = await api('/hardware');
+    el.innerHTML = `
+      <div class="tier-badge tier-${hw.hardware_tier}">${hw.hardware_tier.replace(/_/g, ' ')}</div>
+      
+      <div class="hw-section-title">CPU</div>
+      <div class="hw-stat-row"><span class="hw-stat-key">Model</span><span class="hw-stat-val">${hw.cpu.brand}</span></div>
+      <div class="hw-stat-row"><span class="hw-stat-key">Cores</span><span class="hw-stat-val">${hw.cpu.physical_cores}P / ${hw.cpu.logical_cores}L</span></div>
+      
+      <div class="hw-section-title">Memory</div>
+      <div class="hw-stat-row"><span class="hw-stat-key">Total RAM</span><span class="hw-stat-val">${hw.memory.total_gb} GB</span></div>
+      
+      <div class="hw-section-title">Storage</div>
+      <div class="hw-stat-row"><span class="hw-stat-key">Free Space</span><span class="hw-stat-val">${hw.disk.free_gb} GB</span></div>
+      
+      <div class="hw-section-title">Ollama</div>
+      <div class="hw-stat-row"><span class="hw-stat-key">Status</span><span class="hw-stat-val">${hw.ollama_installed ? 'Installed' : 'Not Found'}</span></div>
+      ${hw.ollama_installed ? `<div class="hw-stat-row"><span class="hw-stat-key">Version</span><span class="hw-stat-val">${hw.ollama_version}</span></div>` : ''}
+      
+      <div class="hw-section-title">Recommendations</div>
+      <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Optimal models for your hardware:</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+        ${hw.recommended_llm_models.map(m => `<span class="route-example" style="color: var(--accent)">${m}</span>`).join('')}
+      </div>
+
+      ${hw.warnings.length ? `<div style="margin-top: 20px;">${hw.warnings.map(w => `<div style="color: var(--yellow); font-size: 12px; margin-bottom: 4px;">${w}</div>`).join('')}</div>` : ''}
+    `;
+  } catch (e) {
+    el.innerHTML = `<div style="color:var(--red);padding:12px;">${e.message}</div>`;
+  }
+}
+
+async function loadPopularModels() {
+  const el = document.getElementById('popular-models-list');
+  el.innerHTML = '<div class="spinner-wrap"><div class="spinner"></div></div>';
+  try {
+    const popular = await api('/models/popular');
+    const local = (await api('/models')).models;
+    
+    el.innerHTML = popular.map(m => {
+      const isDownloaded = local.some(l => l.includes(m.name));
+      return `
+        <div class="model-card">
+          <div class="model-info">
+            <div class="model-name">${m.name}</div>
+            <div class="model-desc">${m.desc}</div>
+            <div class="model-meta">~${m.size_gb} GB ${isDownloaded ? '· <span style="color:var(--green)">Downloaded</span>' : ''}</div>
+          </div>
+          <button class="btn ${isDownloaded ? 'btn-outline' : 'btn-primary'} btn-mini" 
+                  onclick="pullModel('${m.name}')" 
+                  ${isDownloaded ? 'disabled' : ''}>
+            ${isDownloaded ? 'Available' : 'Pull'}
+          </button>
+        </div>
+      `;
+    }).join('');
+  } catch (e) {
+    el.innerHTML = `<div style="color:var(--red);padding:12px;">${e.message}</div>`;
+  }
+}
+
+window.pullModel = async function(modelName) {
+  showLoading(`Pulling model ${modelName}...`, ['This may take several minutes depending on your internet speed.']);
+  try {
+    const r = await api('/models/pull', 'POST', { model: modelName });
+    hideLoading();
+    alert(`✅ ${r.message}. Check Ollama logs or wait for it to appear in the list.`);
+    loadPopularModels();
+    checkStatus();
+  } catch (e) {
+    hideLoading();
+    alert('Failed to pull model: ' + e.message);
+  }
+};
+
+document.getElementById('pull-custom-model-btn').addEventListener('click', () => {
+  const name = document.getElementById('custom-model-name').value.trim();
+  if (name) pullModel(name);
 });
 
 // ── Utility ─────────────────────────────────────────────────────

@@ -13,6 +13,8 @@ from flask_cors import CORS
 from core.pipeline import AdvancedRAGPipeline
 from core.router import SemanticRouter
 from core.hyde import HyDETransformer
+from core.hardware import HardwareInspector, POPULAR_OLLAMA_MODELS
+import ollama as ollama_client
 
 app = Flask(__name__, static_folder="../static", static_url_path="/static")
 CORS(app)
@@ -187,6 +189,35 @@ def clear_index():
 @app.route("/api/models", methods=["GET"])
 def list_models():
     return jsonify({"models": get_pipeline().list_available_models()})
+
+
+@app.route("/api/hardware", methods=["GET"])
+def get_hardware():
+    inspector = HardwareInspector()
+    profile = inspector.inspect()
+    return jsonify(profile.to_dict())
+
+
+@app.route("/api/models/popular", methods=["GET"])
+def get_popular_models():
+    return jsonify(POPULAR_OLLAMA_MODELS)
+
+
+@app.route("/api/models/pull", methods=["POST"])
+def pull_model():
+    data = request.get_json(force=True)
+    model_name = data.get("model")
+    if not model_name:
+        return jsonify({"error": "model name is required"}), 400
+
+    try:
+        # Use the ollama python client to pull the model
+        # Note: In a real production app, this should be async/streaming
+        # but for this demo we'll trigger the pull.
+        ollama_client.pull(model_name)
+        return jsonify({"status": "success", "message": f"Started pulling {model_name}"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 # ─── Demo Corpus ──────────────────────────────────────────────────────────────

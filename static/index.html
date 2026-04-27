@@ -41,6 +41,10 @@
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       HyDE Transform
     </a>
+    <a class="nav-item" data-view="hardware" href="#" id="nav-hardware">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Hardware & Models
+    </a>
 
     <div class="nav-section-label" style="margin-top:16px;">System</div>
     <a class="nav-item" data-view="config" href="#" id="nav-config">
@@ -358,6 +362,41 @@
             <div class="flow-step-body">
               <div class="flow-step-title">Superior Retrieval</div>
               <div class="flow-step-desc">Recall@K improves significantly because the search vector now structurally matches target document embeddings.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════ VIEW: HARDWARE & MODELS ════════════════════ -->
+  <section class="view" id="view-hardware">
+    <div class="two-col-layout">
+      <!-- Hardware Info -->
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">System Hardware Profile</span></div>
+        <div class="panel-body">
+          <div id="hardware-profile-content">
+            <div class="spinner-wrap"><div class="spinner"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Model Downloader -->
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Local Model Manager (Ollama)</span></div>
+        <div class="panel-body">
+          <div class="form-group">
+            <label class="form-label">Available Popular Models</label>
+            <div id="popular-models-list" class="popular-models-grid">
+              <div class="spinner-wrap"><div class="spinner"></div></div>
+            </div>
+          </div>
+          <div class="form-group" style="margin-top: 20px;">
+            <label class="form-label">Custom Model Pull</label>
+            <div class="form-row">
+              <input type="text" id="custom-model-name" class="form-input" placeholder="e.g. llama3.2:1b" />
+              <button class="btn btn-primary" id="pull-custom-model-btn">Pull Model</button>
             </div>
           </div>
         </div>

@@ -4,3 +4,4 @@ sentence-transformers>=2.2
 rank-bm25>=0.2
 numpy>=1.24
 ollama>=0.1
+psutil>=5.9
