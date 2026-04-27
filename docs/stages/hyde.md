@@ -7,12 +7,12 @@ HyDE is a powerful query transformation technique designed to bridge the vocabul
 ```mermaid
 sequenceDiagram
     participant U as User
-    participant LLM as Local LLM (Ollama)
+    participant LLM as "Local LLM (Ollama)"
     participant V as Vector DB
     
-    U->>LLM: Short Query ("What is RRF?")
+    U->>LLM: "Short Query ('What is RRF?')"
     LLM-->>LLM: Self-Correction / Hallucination
-    LLM->>V: Hypothetical Answer ("RRF is a fusion technique...")
+    LLM->>V: "Hypothetical Answer ('RRF is a fusion technique...')"
     Note over V: Embeds the paragraph, not the query.
     V-->>U: Highly Relevant Real Document
 ```

@@ -6,8 +6,8 @@ Hybrid search combines the semantic power of **Dense Vectors** with the keyword 
 
 ```mermaid
 graph TD
-    Q[Query] --> D[Dense Search (Sentence Transformers)]
-    Q --> S[Sparse Search (BM25)]
+    Q[Query] --> D["Dense Search (Sentence Transformers)"]
+    Q --> S["Sparse Search (BM25)"]
     
     D --> R1[Ranked List A]
     S --> R2[Ranked List B]
